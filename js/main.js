@@ -98,5 +98,37 @@ Vue.component('kanban-board',{
                 completed:'Выполненные задачи',
             },
         }
-    }
+    },
+    methods:{
+      getColumnName(columnName){
+          return this.columnNames[columnName];
+      },
+      formatDate(date){
+
+      },
+      createTask(){
+
+      },
+      editTask(columnName, index){
+
+      },
+      saveChanges(columnName, index){
+
+      },
+      deleteTask(columnName, index){
+          this.columns[columnName].splice(index,1);
+      },
+      moveTask(fromColumn, index, toColumn, cause=null){
+
+      },
+      returnTask(fromColumn, index, cause){
+
+      },
+      startDrag(index, columnName, event){
+
+      },
+      onDrop(toColumn, event){
+
+      }
+    },
 });
