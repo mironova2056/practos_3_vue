@@ -175,3 +175,6 @@ Vue.component('kanban-board',{
       }
     },
 });
+new Vue({
+    el:'#app',
+});
