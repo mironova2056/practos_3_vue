@@ -77,4 +77,26 @@ Vue.component('kanban-board',{
             </main>
         </div>
     `,
+    data(){
+        return{
+            columns:{
+              planed:[],
+              inWork:[],
+              test:[],
+              completed:[]
+            },
+            isCreating:false,
+            newTask:{
+                title:'',
+                description:'',
+                deadline:'',
+            },
+            columnNames:{
+                planed:'Запланированные задачи',
+                inWork:'Задачи в работе',
+                test:'Тестирование',
+                completed:'Выполненные задачи',
+            },
+        }
+    }
 });
