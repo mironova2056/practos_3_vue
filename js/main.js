@@ -5,72 +5,74 @@ Vue.component('kanban-board',{
                 <h1>Kanban Доска</h1>
             </header>
             <main class="task-columns">
-                <section class="task-columns">
-                    <h2></h2>
-                    <article class="task-item">
-                        <template>
-                            <h3></h3>
-                            <p></p>
-                            <p>Дата создания: </p>
-                            <p>Дата изменения: </p>
-                            <p>Дедлайн: </p>
+                <section    v-for="(tasks, columnName) in columns" :key="columnName" class="task-column"
+                            @drop="onDrop(columnName, $event)" @dragover.prevent @dragenter.preven>
+                    <h2>{{ getColumnName(columnName) }}</h2>
+                    <article v-for="(task, index) in tasks" :key="index" class="task-item" 
+                            :draggable="!task.isEditing" @dragstart="startDrag(index, columnName, $event)">
+                        <template  v-if="!task.isEditing">
+                            <h3>{{ task.title }}</h3>
+                            <p>{{ task.description }}</p>
+                            <p>Дата создания: {{ formatDate(task.createdAt) }}</p>
+                            <p  v-if="task.changedAt">Дата изменения:  {{ formatDate(task.changedAt) }}</p>
+                            <p v-if="task.deadline">Дедлайн: {{ formatDate(task.deadline) }}</p>
                             <p v-if="columnName === 'completed'">
-                                <span v-if="">Задача просрочена</span>
+                                <span v-if="task.isExpired">Задача просрочена</span>
                                 <span v-else>Задача выполнена вовремя</span>
                             </p>
-                            <div>
+                            <div v-if="columnName === 'test' && task.causes && task.causes.length">
                                 Причина возврата: 
                                 <ol>
-                                    <li></li>
+                                    <li v-for="(cause, causeIndex) in task.causes" :key="causeIndex">{{ cause }}</li>
                                 </ol>
                             </div>
-                            <button>Изменить</button>
-                            <button>Удалить</button>
-                            <button>В работу</button>
-                            <button>В тестирование</button>
-                            <button>Выполнено</button>
-                            <button>Вернуть в работу</button>
-                            <template> 
+                            <button  v-if="columnName !== 'completed'" @click="editTask(columnName, index)">Изменить</button>
+                            <button v-if="columnName === 'planed'" @click="deleteTask(columnName, index)">Удалить</button>
+                            <button  v-if="columnName === 'planed'" @click="moveTask(columnName, index, 'inWork')">В работу</button>
+                            <button  v-if="columnName === 'inWork'" @click="moveTask(columnName, index, 'test')">В тестирование</button>
+                            <button  v-if="columnName === 'test'" @click="moveTask(columnName, index, 'completed')">Выполнено</button>
+                            <button  v-if="columnName === 'test'" @click="task.isReturning = true">Вернуть в работу</button>
+                            <template v-if="task.isReturning"> 
                                 <label>
                                     Причина возврата: 
-                                    <input type="text">
+                                    <input type="text"  v-model="task.returnCause">
                                 </label> 
-                                <button>Подтвердить</button>
+                                <button @click="returnTask(columnName, index, task.returnCause)">Подтвердить</button>
                             </template>
                         </template>
                         <template v-else>
                             <label>
                                 Название:
-                                <input type="text">
+                                <input type="text"  v-model="task.editModel.title">
                             </label>
                             <label>
                                 Описание:
-                                <textarea></textarea>
+                                <textarea v-model="task.editModel.description"></textarea>
                             </label>
                             <label>
                                 Дедлайн:
-                                <input type="datetime-local">
+                                <input type="datetime-local" v-model="task.editModel.deadline">
                             </label>
-                            <button>Сохранить</button>
+                            <button @click="saveChanges(columnName, index)">Сохранить</button>
                         </template>
                     </article>
-                    <template>
-                        <button>Создать новую задачу</button>
+                    <template  v-if="columnName === 'planed'">
+                        <button v-if="!isCreating" @click="isCreating = true">Создать новую задачу</button>
                         <article v-else class="task-item">
                             <label>
                                 Название:
-                                <input type="text">
+                                <input type="text"  v-model="newTask.title">
                             </label>
                             <label>
                                 Описание:
-                                <textarea></textarea>
+                                <textarea  v-model="newTask.description"></textarea>
                             </label>
                             <label>
                                 Дедлайн:
-                                <input type="datetime-local">
+                                <input type="datetime-local"  v-model="newTask.deadline">
                             </label>
-                            <button>Создать</button>
-                            <button>Отмена</button>
+                            <button @click="createTask">Создать</button>
+                            <button  @click="isCreating = false">Отмена</button>
                         </article>
                     </template>
                 </section>    
