@@ -1,5 +1,5 @@
-Vue.component('kanban-board',{
-    template:`
+Vue.component('kanban-board', {
+    template: `
         <div class="wrapper">
             <div v-if="isModalOpen" class="modal-overlay">
                 <div class="modal">
@@ -24,16 +24,24 @@ Vue.component('kanban-board',{
                 <h1>Kanban Доска</h1>
             </header>
             <main class="task-columns">
-                <section    v-for="(tasks, columnName) in columns" :key="columnName" class="task-column"
-                            @drop="onDrop(columnName, $event)" @dragover.prevent @dragenter.prevent>
+                <section v-for="(tasks, columnName) in columns" :key="columnName" class="task-column"
+                         @drop="onDrop(columnName, $event)" @dragover.prevent @dragenter.prevent>
                     <h2>{{ getColumnName(columnName) }}</h2>
-                    <article v-for="(task, index) in tasks" :key="index" class="task-item" 
-                            :draggable="!task.isEditing" @dragstart="startDrag(index, columnName, $event)">
-                        <template  v-if="!task.isEditing">
+          
+                    <div v-if="columnName === 'test' && activeTaskIndex !== null" class="done-work-input">
+                        <label>
+                            Что было сделано:
+                            <textarea v-model="doneWorkDescription"></textarea>
+                        </label>
+                        <button @click="confirmDoneWork">Подтвердить</button>
+                    </div>
+                    <article v-for="(task, index) in tasks" :key="index" class="task-item"
+                             :draggable="!task.isEditing" @dragstart="startDrag(index, columnName, $event)">
+                        <template v-if="!task.isEditing">
                             <h3>{{ task.title }}</h3>
                             <p>{{ task.description }}</p>
                             <p>Дата создания: {{ formatDate(task.createdAt) }}</p>
-                            <p  v-if="task.changedAt">Дата изменения:  {{ formatDate(task.changedAt) }}</p>
+                            <p v-if="task.changedAt">Дата изменения: {{ formatDate(task.changedAt) }}</p>
                             <p v-if="task.deadline">Дедлайн: {{ formatDate(task.deadline) }}</p>
                             <div v-if="columnName === 'inWork' && task.causes && task.causes.length">
                                 Причины возврата:
@@ -45,30 +53,38 @@ Vue.component('kanban-board',{
                                 <span v-if="task.isExpired">Задача просрочена</span>
                                 <span v-else>Задача выполнена вовремя</span>
                             </p>
+                            <div v-if="columnName === 'test' && task.doneWork">
+                                <strong>Что было сделано:</strong>
+                                <p>{{ task.doneWork }}</p>
+                            </div>
                             <div v-if="columnName === 'test' && task.causes && task.causes.length">
-                                Причина возврата: 
+                                Причина возврата:
                                 <ol>
                                     <li v-for="(cause, causeIndex) in task.causes" :key="causeIndex">{{ cause }}</li>
                                 </ol>
                             </div>
-                            <button  v-if="columnName !== 'completed'" @click="editTask(columnName, index)">Изменить</button>
+                          
+                            <div v-if="columnName === 'completed' && task.movedToInWorkCount > 3">
+                                <strong style="color: #ffbebe;">У этой задачи было много доработок!!!</strong>
+                            </div>
+                            <button v-if="columnName !== 'completed'" @click="editTask(columnName, index)">Изменить</button>
                             <button v-if="columnName === 'planed'" @click="deleteTask(columnName, index)">Удалить</button>
-                            <button  v-if="columnName === 'planed'" @click="moveTask(columnName, index, 'inWork')">В работу</button>
-                            <button  v-if="columnName === 'inWork'" @click="moveTask(columnName, index, 'test')">В тестирование</button>
-                            <button  v-if="columnName === 'test'" @click="moveTask(columnName, index, 'completed')">Выполнено</button>
-                            <button  v-if="columnName === 'test'" @click="task.isReturning = true">Вернуть в работу</button>
-                            <template v-if="task.isReturning"> 
+                            <button v-if="columnName === 'planed'" @click="moveTask(columnName, index, 'inWork')">В работу</button>
+                            <button v-if="columnName === 'inWork'" @click="moveTaskToTest(columnName, index)">В тестирование</button>
+                            <button v-if="columnName === 'test'" @click="moveTask(columnName, index, 'completed')">Выполнено</button>
+                            <button v-if="columnName === 'test'" @click="task.isReturning = true">Вернуть в работу</button>
+                            <template v-if="task.isReturning">
                                 <label>
-                                    Причина возврата: 
-                                    <input type="text"  v-model="task.returnCause">
-                                </label> 
+                                    Причина возврата:
+                                    <input type="text" v-model="task.returnCause">
+                                </label>
                                 <button @click="returnTask(columnName, index, task.returnCause)">Подтвердить</button>
                             </template>
                         </template>
                         <template v-else>
                             <label>
                                 Название:
-                                <input type="text"  v-model="task.editModel.title">
+                                <input type="text" v-model="task.editModel.title">
                             </label>
                             <label>
                                 Описание:
@@ -81,133 +97,153 @@ Vue.component('kanban-board',{
                             <button @click="saveChanges(columnName, index)">Сохранить</button>
                         </template>
                     </article>
-                    <template  v-if="columnName === 'planed'">
+                    <template v-if="columnName === 'planed'">
                         <button v-if="columnName === 'planed'" @click="openModal">Создать новую задачу</button>
                     </template>
-                </section>    
+                </section>
             </main>
         </div>
     `,
-    data(){
-        return{
-            columns:{
-              planed:[],
-              inWork:[],
-              test:[],
-              completed:[]
+    data() {
+        return {
+            columns: {
+                planed: [],
+                inWork: [],
+                test: [],
+                completed: []
             },
-            isCreating:false,
-            newTask:{
-                title:'',
-                description:'',
-                deadline:'',
+            isCreating: false,
+            newTask: {
+                title: '',
+                description: '',
+                deadline: '',
             },
-            columnNames:{
-                planed:'Запланированные задачи',
-                inWork:'Задачи в работе',
-                test:'Тестирование',
-                completed:'Выполненные задачи',
+            columnNames: {
+                planed: 'Запланированные задачи',
+                inWork: 'Задачи в работе',
+                test: 'Тестирование',
+                completed: 'Выполненные задачи',
             },
-            isModalOpen:false,
-        }
+            isModalOpen: false,
+            doneWorkDescription: '',
+            activeTaskIndex: null,
+        };
     },
-    methods:{
-        saveToLocalStorage(){
-            localStorage.setItem('kanbanData', JSON.stringify(this.columns))
+    methods: {
+        saveToLocalStorage() {
+            localStorage.setItem('kanbanData', JSON.stringify(this.columns));
         },
-        loadFromLocalStorage(){
+        loadFromLocalStorage() {
             const data = localStorage.getItem('kanbanData');
-            if(data){
-                this.columns = JSON.parse(data)
+            if (data) {
+                this.columns = JSON.parse(data);
             }
         },
-        openModal(){
+        openModal() {
             this.isModalOpen = true;
         },
-        getColumnName(columnName){
+        getColumnName(columnName) {
             return this.columnNames[columnName];
         },
-        formatDate(date){
+        formatDate(date) {
             if (!date) return '';
-            return new Intl.DateTimeFormat('ru',{
-                  hour:'numeric',
-                  minute:'numeric',
-                  day:'numeric',
-                  month:'numeric',
-                  year:'numeric',
+            return new Intl.DateTimeFormat('ru', {
+                hour: 'numeric',
+                minute: 'numeric',
+                day: 'numeric',
+                month: 'numeric',
+                year: 'numeric',
             }).format(new Date(date));
         },
-        createTask(){
+        createTask() {
             const task = {
-                  ...this.newTask,
-                  createdAt:new Date(),
-                  changedAt:new Date(),
-                  isEditing:false,
-                  isReturning:false,
-                  returnCause:'',
-                  editModel:{...this.newTask}
+                ...this.newTask,
+                createdAt: new Date(),
+                changedAt: new Date(),
+                isEditing: false,
+                isReturning: false,
+                returnCause: '',
+                editModel: { ...this.newTask },
+                movedToInWorkCount: 0,
             };
             this.columns.planed.push(task);
-            this.isCreating = false;
-            this.newTask = {title: '', description:'',deadline:'',};
+            this.isModalOpen = false;
+            this.newTask = { title: '', description: '', deadline: '' };
             this.saveToLocalStorage();
         },
-        editTask(columnName, index){
+        editTask(columnName, index) {
             this.columns[columnName][index].isEditing = true;
             this.saveToLocalStorage();
         },
-        saveChanges(columnName, index){
+        saveChanges(columnName, index) {
             const task = this.columns[columnName][index];
             task.title = task.editModel.title;
             task.description = task.editModel.description;
             task.deadline = task.editModel.deadline;
             task.changedAt = new Date();
             task.isEditing = false;
-        },
-        deleteTask(columnName, index){
-            this.columns[columnName].splice(index,1);
             this.saveToLocalStorage();
         },
-        moveTask(fromColumn, index, toColumn, cause=null){
-            const task = this.columns[fromColumn].splice(index,1)[0];
-            if(toColumn === 'completed'){
+        deleteTask(columnName, index) {
+            this.columns[columnName].splice(index, 1);
+            this.saveToLocalStorage();
+        },
+        moveTaskToTest(fromColumn, index) {
+            this.activeTaskIndex = index;
+            this.doneWorkDescription = '';
+        },
+        confirmDoneWork() {
+            if (this.activeTaskIndex !== null) {
+                const task = this.columns.inWork[this.activeTaskIndex];
+                task.doneWork = this.doneWorkDescription;
+                this.moveTask('inWork', this.activeTaskIndex, 'test');
+                this.activeTaskIndex = null;
+                this.doneWorkDescription = '';
+            }
+        },
+        moveTask(fromColumn, index, toColumn, cause = null) {
+            const task = this.columns[fromColumn].splice(index, 1)[0];
+            if (toColumn === 'inWork') {
+                task.movedToInWorkCount += 1;
+            }
+            if (toColumn === 'completed') {
                 task.isExpired = new Date() > new Date(task.deadline);
             }
-            if(cause){
+            if (cause) {
                 task.causes = task.causes || [];
                 task.causes.push(cause);
             }
             this.columns[toColumn].push(task);
             this.saveToLocalStorage();
         },
-        returnTask(fromColumn, index, cause){
+        returnTask(fromColumn, index, cause) {
             const task = this.columns[fromColumn][index];
-            if(!task){
+            if (!task) {
                 console.error('Задача не найдена');
                 return;
             }
-            this.moveTask(fromColumn,index,'inWork', cause);
-            if(task){
+            this.moveTask(fromColumn, index, 'inWork', cause);
+            if (task) {
                 task.isReturning = false;
             }
             this.saveToLocalStorage();
         },
-        startDrag(index, columnName, event){
+        startDrag(index, columnName, event) {
             event.dataTransfer.setData('task-index', index);
             event.dataTransfer.setData('from-column', columnName);
         },
-        onDrop(toColumn, event){
+        onDrop(toColumn, event) {
             const taskIndex = event.dataTransfer.getData('task-index');
             const fromColumn = event.dataTransfer.getData('from-column');
-            if(toColumn === 'planed')return;
-            this.moveTask(fromColumn,taskIndex,toColumn);
+            if (toColumn === 'planed') return;
+            this.moveTask(fromColumn, taskIndex, toColumn);
         },
-
     },
     mounted() {
         this.loadFromLocalStorage();
     }
 });
+
 new Vue({
-    el:'#app',
+    el: '#app',
 });
