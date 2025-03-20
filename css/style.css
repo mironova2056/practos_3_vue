@@ -1,65 +1,81 @@
-body{
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif ;
-    margin:0;
-    padding:0;
-    background-color:#e9ecef;
-    color:#333;
-    line-height:1.6;
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #e9ecef;
+    color: #333;
+    line-height: 1.6;
 }
-.wrapper{
-    padding:20px;
-    max-width:1200px;
-    margin:0 auto;
+
+.wrapper {
+    padding: 20px;
+    max-width: 1500px;
+    margin: 0 auto;
 }
-.header{
-    text-align:center;
+
+.header {
+    text-align: center;
     margin-bottom: 30px;
 }
-.header h1{
-    font-size:2.5rem;
+
+.header h1 {
+    font-size: 2.5rem;
     color: #2c3e50;
-    margin:0;
+    margin: 0;
 }
-.task-columns{
-    display:flex;
-    flex-direction: column;
-    gap:20px;
-    padding:20px;
+
+.task-columns {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+    padding: 20px;
     background-color: #ffffff;
     border-radius: 10px;
-    box-shadow:  0 4px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    width: 1500px;
 }
-.task-column{
+
+.task-column {
     border: 1px solid #ddd;
     padding: 15px;
     border-radius: 8px;
     background-color: #f8f9fa;
+    min-width: 250px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
 }
-.task-column h2{
-    font-size:1.5rem;
+
+.task-column h2 {
+    font-size: 1.5rem;
     color: #34495e;
     margin-bottom: 15px;
     border-bottom: 2px solid #3498db;
     padding-bottom: 10px;
 }
-.task-item{
-    margin-bottom:15px;
-    padding:15px;
+
+.task-item {
+    margin-bottom: 15px;
+    padding: 15px;
     border: 1px solid #ddd;
     border-radius: 8px;
     background-color: #fff;
 }
-.task-item h3{
-    font-size:1.2rem;
+
+.task-item h3 {
+    font-size: 1.2rem;
     color: #2c3e50;
-    margin:0 0 10px;
+    margin: 0 0 10px;
 }
-.task-item p{
-    font-size:0.9rem;
+
+.task-item p {
+    font-size: 0.9rem;
     color: #555;
     margin: 5px 0;
 }
-.task-item button{
+
+.task-item button {
     margin-right: 8px;
     margin-top: 10px;
     padding: 8px 12px;
@@ -67,8 +83,16 @@ body{
     color: white;
     border: none;
     border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
 }
-.task-item input, .task-item textarea{
+
+.task-item button:hover {
+    background-color: #2980b9;
+}
+
+.task-item input,
+.task-item textarea {
     width: calc(100% - 20px);
     padding: 8px;
     margin-top: 5px;
@@ -76,12 +100,14 @@ body{
     border-radius: 5px;
     font-size: 0.9rem;
 }
-.task-item label{
+
+.task-item label {
     font-size: 0.9rem;
     color: #555;
     margin-bottom: 5px;
     display: block;
 }
+
 .task-column button {
     width: 100%;
     padding: 10px;
@@ -89,6 +115,8 @@ body{
     color: white;
     border: none;
     border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
 }
 
 .task-column button:hover {
@@ -112,15 +140,87 @@ body{
     cursor: pointer;
     transition: background-color 0.2s ease, border-color 0.2s ease;
 }
+
 .task-column .task-item.create-task:hover {
     background-color: #dfe6e9;
     border-color: #95a5a6;
 }
+
 .task-column.drag-over {
     background-color: #e0f7fa;
     border-color: #80deea;
 }
+
 .task-item.dragging {
     opacity: 0.5;
     transform: scale(0.95);
+}
+
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    width: 400px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.modal h2 {
+    font-size: 1.5rem;
+    color: #2c3e50;
+    margin-bottom: 20px;
+}
+
+.modal label {
+    font-size: 0.9rem;
+    color: #555;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.modal input,
+.modal textarea {
+    width: calc(100% - 20px);
+    padding: 8px;
+    margin-top: 5px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 0.9rem;
+}
+
+.modal button {
+    margin-right: 8px;
+    margin-top: 10px;
+    padding: 8px 12px;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.modal button:hover {
+    background-color: #2980b9;
+}
+
+.modal button.cancel {
+    background-color: #e74c3c;
+}
+
+.modal button.cancel:hover {
+    background-color: #c0392b;
 }
